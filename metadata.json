@@ -1,0 +1,17 @@
+{
+  "name": "gpkfr-laravel",
+  "version": "0.1.0",
+  "author": "Guillaume Pancak",
+  "summary": "install debian Laravel environment",
+  "license": "Apache 2.0",
+  "source": "https://github.com/gpkfr/gpkfr-laravel.git",
+  "project_page": "https://github.com/gpkfr/gpkfr-laravel",
+  "issues_url": "https://github.com/gpkfr/gpkfr-laravel/issues",
+  "dependencies": [
+    {
+      "version_range": ">= 1.0.0",
+      "name": "puppetlabs-stdlib"
+    }
+  ]
+}
+
