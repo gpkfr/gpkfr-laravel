@@ -1,0 +1,39 @@
+upstream _fastcgi {
+  server unix:/var/run/php5-fpm.sock;
+}
+
+server {
+  server_name <%= @server_name %>;
+
+  listen 80;
+  root <%= @root_dir %>;
+  index index.php;
+
+  location / {
+    try_files $uri $uri/ /index.php?$query_string;
+  }
+
+  error_page 404 /index.php;
+
+  location ~* \.php {
+    location ~\..*/.*\.php$ {
+      return 403;
+    }
+    
+    try_files $uri = 404;
+    
+    include          fastcgi_params;
+    fastcgi_index    index.php;
+    fastcgi_pass     _fastcgi;
+    fastcgi_param    SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_param    SCRIPT_NAME     $fastcgi_script_name;
+  }
+  
+  location ~ /\.git {
+    deny all;
+  }
+
+  location ~ /\.ht {
+    deny all;
+  }
+}

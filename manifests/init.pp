@@ -37,5 +37,69 @@
 #
 class laravel {
 
+  $nginx = "nginx-light"
+  $base = [ $nginx, "php5-cli", "php5-mcrypt", "redis-server" ]
 
+  exec { "apt-update": 
+    command => "/usr/bin/apt-get update",
+  }
+
+  include apt
+
+  apt::source { 'dotdebbase':
+    location   => 'http://packages.dotdeb.org',
+    release    => 'wheezy',
+    repos      => 'all',
+    key        => '89DF5277',
+    key_source => 'http://www.dotdeb.org/dotdeb.gpg',
+  }
+
+  apt::source { 'dotdeb':
+  location   => 'http://packages.dotdeb.org',
+  release    => 'wheezy-php55',
+  repos      => 'all',
+  key        => '89DF5277',
+  key_source => 'http://www.dotdeb.org/dotdeb.gpg',
+  }
+
+  package { $base:
+    ensure  => 'latest',
+    require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+  }
+
+  include phpfpm
+
+  phpfpm::pool { 'www':
+    ensure => 'absent',
+  }->phpfpm::pool { 'vagrant':
+    listen       => '/var/run/php5-fpm.sock',
+    user         => 'vagrant',
+    group        => 'vagrant',
+    listen_owner => 'vagrant',
+    listen_group => 'vagrant',
+    listen_mode => 0666,
+  }
+
+  #Install composer
+  class { ['php::composer', 'php::composer::auto_update']: }
+
+  #Install & Configure Mysql_server
+
+  class { '::mysql::server':
+    root_password    => 'root',
+    override_options => {'mysqld' => { 'max_connections' => '1024' }}
+  }
+  
+  # service { 'nginx':
+  #   name    => "nginx",
+  #   ensure  => running,
+  #   enable  => true,
+  #   require => Package[$nginx],
+  # }
+  #
+  # file { "/etc/nginx/sites-enabled/default":
+  #   ensure  => absent,
+  #   require => Package [$nginx],
+  # }
+  
 }
