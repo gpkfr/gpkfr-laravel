@@ -38,7 +38,7 @@
 class laravel {
 
   $nginx = "nginx-light"
-  $base = [ $nginx, "php5-cli", "php5-mcrypt", "redis-server" ]
+  $base = [ $nginx, "php5-cli", "php5-mcrypt", "php5-mysql", "redis-server" ]
 
   exec { "apt-update": 
     command => "/usr/bin/apt-get update",
@@ -90,16 +90,9 @@ class laravel {
     override_options => {'mysqld' => { 'max_connections' => '1024' }}
   }
   
-  # service { 'nginx':
-  #   name    => "nginx",
-  #   ensure  => running,
-  #   enable  => true,
-  #   require => Package[$nginx],
-  # }
-  #
-  # file { "/etc/nginx/sites-enabled/default":
-  #   ensure  => absent,
-  #   require => Package [$nginx],
-  # }
-  
+  mysql_database { 'laravel':
+    ensure  => 'present',
+    charset => 'utf8',
+    collate => 'utf8_unicode_ci',
+  }
 }
