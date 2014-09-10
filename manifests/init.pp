@@ -39,13 +39,14 @@ class laravel (
   $use_xdebug = false,
   $virtual = $::virtual,
   $remote_host_ip = undef,
+  $database_server = "mysql"
 )
 {
   validate_bool($use_xdebug)
 
   $xdebug = "php5-xdebug"
   $nginx = "nginx-light"
-  $base = [ $nginx, "php5-cli", "php5-mcrypt", "php5-mysql", "redis-server" ]
+  $base = [ $nginx, "php5-cli", "php5-mcrypt", "redis-server" ]
 
   exec { "apt-update": 
     command => "/usr/bin/apt-get update",
@@ -131,18 +132,22 @@ class laravel (
     }
   }
 
-
-
   #Install & Configure Mysql_server
+  if ($database_server == "mysql" ) {
+    class { '::mysql::server':
+      root_password    => 'root',
+      override_options => {'mysqld' => { 'max_connections' => '1024' }}
+    }
 
-  class { '::mysql::server':
-    root_password    => 'root',
-    override_options => {'mysqld' => { 'max_connections' => '1024' }}
-  }
+    mysql_database { 'laravel':
+      ensure  => 'present',
+      charset => 'utf8',
+      collate => 'utf8_unicode_ci',
+    }
 
-  mysql_database { 'laravel':
-    ensure  => 'present',
-    charset => 'utf8',
-    collate => 'utf8_unicode_ci',
+    package { "php5-mysql":
+      ensure  => latest,
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
+    }
   }
 }
