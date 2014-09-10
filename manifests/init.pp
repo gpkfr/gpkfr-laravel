@@ -37,12 +37,15 @@
 #
 class laravel (
   $use_xdebug = false,
+  $use_hhvm = false,
   $virtual = $::virtual,
   $remote_host_ip = undef,
   $database_server = "mysql"
 )
 {
   validate_bool($use_xdebug)
+  
+  validate_bool($use_hhvm)
 
   $xdebug = "php5-xdebug"
   $nginx = "nginx-light"
@@ -72,20 +75,58 @@ class laravel (
 
   package { $base:
     ensure  => 'latest',
-    require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+    require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec ['apt-update']],
   }
 
-  include phpfpm
+  service {"nginx":
+    ensure  => running,
+    require => Package[$nginx],
+  }
 
-  phpfpm::pool { 'www':
-    ensure => 'absent',
-  }->phpfpm::pool { 'vagrant':
-    listen       => '/var/run/php5-fpm.sock',
-    user         => 'vagrant',
-    group        => 'vagrant',
-    listen_owner => 'vagrant',
-    listen_group => 'vagrant',
-    listen_mode  => 0666,
+
+  # Install HHVM
+  if $use_hhvm {
+    apt::source { 'hhvm':
+      location    => 'http://dl.hhvm.com/debian',
+      release     => 'wheezy',
+      repos       => 'main',
+      key         => '1BE7A449',
+      key_source  => 'http://dl.hhvm.com/conf/hhvm.gpg.key',
+      include_src => false,
+    }
+
+    package { 'hhvm':
+      ensure  => latest,
+      require => Apt::Source['hhvm']
+    }
+
+    service { 'hhvm':
+      ensure  => running,
+      require => Package['hhvm'],
+      notify  => Service['nginx'],
+    }
+
+  } else {
+
+    package { 'hhvm':
+      ensure => 'purged',
+    }
+
+  }
+
+  if ! $use_hhvm {
+    include phpfpm
+
+    phpfpm::pool { 'www':
+      ensure => 'absent',
+    }->phpfpm::pool { 'vagrant':
+      listen       => '/var/run/php5-fpm.sock',
+      user         => 'vagrant',
+      group        => 'vagrant',
+      listen_owner => 'vagrant',
+      listen_group => 'vagrant',
+      listen_mode  => 0666,
+    }
   }
 
   #Install composer
@@ -119,6 +160,7 @@ class laravel (
         'set xdebug/xdebug.remote_log /tmp/xdebug_remote.log',
       ]
     }
+
 
     #Configure Xdebug
     php::fpm::config { "Enable Xdebug":
