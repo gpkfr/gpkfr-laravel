@@ -149,6 +149,11 @@ class laravel (
       ensure  => latest,
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
     }
+  } else {
+    $pkgmysql = [ "php5-mysql", "mysql-common" ]
+    package { $pkgmysql:
+     ensure => purged,
+    }
   }
 
   if ( $database_server == "postgresql" ) {
@@ -165,7 +170,18 @@ class laravel (
       user     => 'root',
       password => postgresql_password('root','root'),
     }
+
+    package { "php5-pgsql":
+      ensure  => 'latest',
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
+    } 
+  } else {
+      $pkgpgsql = [ "php5-pgsql", "postgresql-client-common", "postgresql-common" ]
+      package { $pkgpgsql:
+        ensure => purged,
+      }
   }
+
 
 #The End
 }
