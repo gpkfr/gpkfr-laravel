@@ -156,6 +156,7 @@ class laravel (
     }
   }
 
+  #Install and configure postgresql
   if ( $database_server == "postgresql" ) {
 
     class { 'postgresql::server':
@@ -182,6 +183,19 @@ class laravel (
       }
   }
 
+  #Install sqlite3
+  if ( $database_server == "sqlite" ) {
+    $pkgsqlite = [ "sqlite3", "php5-sqlite" ]
+    package { $pkgsqlite:
+      ensure  => 'latest',
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
+    }
+  } else {
+    $pkgsqlite = [ "sqlite3", "php5-sqlite" ]
+    package { $pkgsqlite:
+      ensure => 'purged',
+    }
+  }
 
 #The End
 }
