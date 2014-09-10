@@ -133,7 +133,7 @@ class laravel (
   }
 
   #Install & Configure Mysql_server
-  if ($database_server == "mysql" ) {
+  if ( $database_server == "mysql" ) {
     class { '::mysql::server':
       root_password    => 'root',
       override_options => {'mysqld' => { 'max_connections' => '1024' }}
@@ -150,4 +150,22 @@ class laravel (
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
     }
   }
+
+  if ( $database_server == "postgresql" ) {
+
+    class { 'postgresql::server':
+      ip_mask_deny_postgres_user => '0.0.0.0/32',
+      ip_mask_allow_all_users    => '0.0.0.0/0',
+      listen_addresses           => '*',
+      postgres_password          => 'vagrant',
+      require                    => Exec['apt-update'],
+    }
+
+    postgresql::server::db { 'laravel':
+      user     => 'root',
+      password => postgresql_password('root','root'),
+    }
+  }
+
+#The End
 }
