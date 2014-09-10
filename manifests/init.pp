@@ -35,8 +35,15 @@
 #
 # Copyright 2014 Your name here, unless otherwise noted.
 #
-class laravel {
+class laravel (
+  $use_xdebug = false,
+  $virtual = $::virtual,
+  $remote_host_ip = undef,
+)
+{
+  validate_bool($use_xdebug)
 
+  $xdebug = "php5-xdebug"
   $nginx = "nginx-light"
   $base = [ $nginx, "php5-cli", "php5-mcrypt", "php5-mysql", "redis-server" ]
 
@@ -77,11 +84,54 @@ class laravel {
     group        => 'vagrant',
     listen_owner => 'vagrant',
     listen_group => 'vagrant',
-    listen_mode => 0666,
+    listen_mode  => 0666,
   }
 
   #Install composer
   class { ['php::composer', 'php::composer::auto_update']: }
+
+  if $use_xdebug {
+    package { $xdebug:
+      ensure => 'latest',
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+    }
+
+    if ($virtual == "VMware") { 
+      $xdebug_config=[
+        'set xdebug/xdebug.remote_enable 1',
+        'set xdebug/xdebug.idekey vagrant',
+        'set xdebug/xdebug.remote_handler dbgp',
+        'set xdebug/xdebug.remote_port 9000',
+        'set xdebug/xdebug.remote_autostart 1',
+        'set xdebug/xdebug.remote_connect_back 0',
+        "set xdebug/xdebug.remote_host $remote_host_ip",
+        'set xdebug/xdebug.remote_log /tmp/xdebug_remote.log',
+      ]
+    } else {
+       $xdebug_config=[
+        'set xdebug/xdebug.remote_enable 1',
+        'set xdebug/xdebug.idekey vagrant',
+        'set xdebug/xdebug.remote_handler dbgp',
+        'set xdebug/xdebug.remote_port 9000',
+        'set xdebug/xdebug.remote_autostart 1',
+        'set xdebug/xdebug.remote_connect_back 1',
+        'set xdebug/xdebug.remote_log /tmp/xdebug_remote.log',
+      ]
+    }
+
+    #Configure Xdebug
+    php::fpm::config { "Enable Xdebug":
+      file    => '/etc/php5/mods-available/xdebug.ini',
+      config  => $xdebug_config,
+      require => Package[$xdebug],
+    }
+  } else {
+    package { $xdebug:
+      ensure => purged,
+    }
+  }
+
+
 
   #Install & Configure Mysql_server
 
@@ -89,7 +139,7 @@ class laravel {
     root_password    => 'root',
     override_options => {'mysqld' => { 'max_connections' => '1024' }}
   }
-  
+
   mysql_database { 'laravel':
     ensure  => 'present',
     charset => 'utf8',
