@@ -38,20 +38,23 @@
 class laravel (
   $use_xdebug = false,
   $use_hhvm = false,
+  $npm_pkg = undef,
+  $install_node = false,
   $virtual = $::virtual,
   $remote_host_ip = undef,
-  $database_server = "mysql"
+  $database_server = "mysql",
+  $nodejs_version = $::nodejs_stable_version
 )
 {
   validate_bool($use_xdebug)
-  
+
   validate_bool($use_hhvm)
 
   $xdebug = "php5-xdebug"
   $nginx = "nginx-light"
   $base = [ $nginx, "php5-cli", "php5-mcrypt", "redis-server" ]
 
-  exec { "apt-update": 
+  exec { "apt-update":
     command => "/usr/bin/apt-get update",
   }
 
@@ -138,7 +141,7 @@ class laravel (
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
     }
 
-    if ($virtual == "VMware") { 
+    if ($virtual == "VMware") {
       $xdebug_config=[
         'set xdebug/xdebug.remote_enable 1',
         'set xdebug/xdebug.idekey vagrant',
@@ -217,7 +220,7 @@ class laravel (
     package { "php5-pgsql":
       ensure  => 'latest',
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
-    } 
+    }
   } else {
       $pkgpgsql = [ "php5-pgsql", "postgresql-client-common", "postgresql-common" ]
       package { $pkgpgsql:
@@ -236,6 +239,55 @@ class laravel (
     $pkgsqlite = [ "sqlite3", "php5-sqlite" ]
     package { $pkgsqlite:
       ensure => 'purged',
+    }
+  }
+
+  if $install_node {
+    notify {"nodejs":
+      name    => "nodejs",
+      message => "install Nodejs ?",
+    }
+
+    if $::version_nodejs_installed != $nodejs_version {
+      notify {"Install NodeJS version : {$nodejs_version}. Please be Patient ;)":}
+      class { 'nodejs':
+        version => $nodejs_version,
+      }->file { "/usr/local/bin/node":
+        ensure  => link,
+        target  => '/usr/local/node/node-default/bin/node',
+      }->file { "/usr/local/bin/npm":
+        ensure  => link,
+        target  => '/usr/local/node/node-default/bin/npm',
+      }
+
+
+      if $npm_pkg != undef {
+        package { $npm_pkg:
+          provider => npm,
+          require  => [Class['nodejs'], File['/usr/local/bin/npm']],
+        }
+      }
+    }
+
+    if $::version_nodejs_installed {
+
+      file { "/usr/local/bin/node":
+        ensure  => link,
+        target  => '/usr/local/node/node-default/bin/node',
+      }
+
+      file { "/usr/local/bin/npm":
+        ensure  => link,
+        target  => '/usr/local/node/node-default/bin/npm',
+      }
+
+
+      if $npm_pkg != undef {
+        package { $npm_pkg:
+        provider => npm,
+        require  => File['/usr/local/bin/npm'],
+        }
+      }
     }
   }
 
