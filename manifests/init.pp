@@ -243,13 +243,10 @@ class laravel (
   }
 
   if $install_node {
-    notify {"nodejs":
-      name    => "nodejs",
-      message => "install Nodejs ?",
-    }
+    notice("is nodejs Required ?")
 
     if $::version_nodejs_installed != $nodejs_version {
-      notify {"Install NodeJS version : {$nodejs_version}. Please be Patient ;)":}
+      notice ("Install NodeJS version : {$nodejs_version}. Please, be Patient")
       class { 'nodejs':
         version => $nodejs_version,
       }->file { "/usr/local/bin/node":
@@ -270,6 +267,8 @@ class laravel (
     }
 
     if $::version_nodejs_installed {
+      
+      notice ("Nodejs already installed")
 
       file { "/usr/local/bin/node":
         ensure  => link,
