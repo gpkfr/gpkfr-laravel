@@ -39,6 +39,7 @@ class laravel (
   $use_xdebug = false,
   $use_hhvm = false,
   $npm_pkg = undef,
+  $install_beanstalkd = false,
   $install_node = false,
   $virtual = $::virtual,
   $remote_host_ip = undef,
@@ -241,6 +242,35 @@ class laravel (
       ensure => 'purged',
     }
   }
+
+  if $install_beanstalkd {
+    #beanstalk install
+    package { 'beanstalkd':
+        ensure => latest,
+        before => Exec['activate_beanstalk'],
+    }
+
+    service { 'beanstalkd':
+        ensure  => running,
+        enable  => true,
+        require => Exec['activate_beanstalk'],
+    }
+
+    exec { 'activate_beanstalk':
+        command  => 'sed -i -e "s/^[# ]*\(START=.*\)/\\1/" /etc/default/beanstalkd',
+        path     => "/bin",
+        provider => shell,
+        unless   => 'grep -Fxq "START=yes" /etc/default/beanstalkd',
+        notify   => Service['beanstalkd'],
+    }
+
+  } else {
+
+    package { 'beanstalkd':
+      ensure => purged,
+    }
+  }
+
 
   if $install_node {
     notice("is nodejs Required ?")
