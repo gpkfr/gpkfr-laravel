@@ -201,12 +201,14 @@ class laravel (
 
     package { "php5-mysql":
       ensure  => latest,
-      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+      notify  => Service['php5-fpm'],
     }
   } else {
     $pkgmysql = [ "php5-mysql", "mysql-common" ]
     package { $pkgmysql:
      ensure => purged,
+     notify  => Service['php5-fpm'],
     }
   }
 
@@ -228,12 +230,14 @@ class laravel (
 
     package { "php5-pgsql":
       ensure  => 'latest',
-      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+      notify  => Service['php5-fpm'],
     }
   } else {
       $pkgpgsql = [ "php5-pgsql", "postgresql-client-common", "postgresql-common" ]
       package { $pkgpgsql:
         ensure => purged,
+        notify  => Service['php5-fpm'],
       }
   }
 
@@ -285,6 +289,11 @@ class laravel (
       ensure => latest,
     }
 
+    package { 'php5-redis':
+      ensure => latest,
+      notify => Service['php5-fpm'],
+    }
+
     service { 'redis-server':
       ensure  => running,
       enable  => true,
@@ -294,6 +303,10 @@ class laravel (
   } else {
     package { 'redis-server':
       ensure => purged,
+    }
+    package { 'php5-redis':
+      ensure => purged,
+      notify => Service['php5-fpm'],
     }
   }
 
