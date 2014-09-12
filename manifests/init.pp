@@ -41,6 +41,7 @@ class laravel (
   $npm_pkg = undef,
   $install_beanstalkd = false,
   $install_node = false,
+  $install_redis = false,
   $virtual = $::virtual,
   $remote_host_ip = undef,
   $database_server = "mysql",
@@ -53,13 +54,19 @@ class laravel (
 
   $xdebug = "php5-xdebug"
   $nginx = "nginx-light"
-  $base = [ $nginx, "php5-cli", "php5-mcrypt", "redis-server" ]
+  $base = [ $nginx, "php5-cli", "php5-mcrypt" ]
 
-  exec { "apt-update":
-    command => "/usr/bin/apt-get update",
+  if $virtual == "virtualbox" and $fqdn == '' {
+    $fqdn = "localhost"
   }
 
   include apt
+
+  exec { "apt-update":
+    command => "/usr/bin/apt-get update",
+    require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb']],
+  }
+
 
   apt::source { 'dotdebbase':
     location   => 'http://packages.dotdeb.org',
@@ -97,6 +104,7 @@ class laravel (
       key         => '1BE7A449',
       key_source  => 'http://dl.hhvm.com/conf/hhvm.gpg.key',
       include_src => false,
+      notify      => Exec['apt-update'],
     }
 
     package { 'hhvm':
@@ -271,6 +279,24 @@ class laravel (
     }
   }
 
+  if $install_redis {
+    #Redis-server install
+    package { 'redis-server':
+      ensure => latest,
+    }
+
+    service { 'redis-server':
+      ensure  => running,
+      enable  => true,
+      require => Package['redis-server'],
+    }
+
+  } else {
+    package { 'redis-server':
+      ensure => purged,
+    }
+  }
+
 
   if $install_node {
     notice("is nodejs Required ?")
@@ -297,7 +323,7 @@ class laravel (
     }
 
     if $::version_nodejs_installed {
-      
+
       notice ("Nodejs already installed")
 
       file { "/usr/local/bin/node":
