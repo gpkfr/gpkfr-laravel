@@ -48,6 +48,9 @@ class laravel (
   $nodejs_version = $::nodejs_stable_version
 )
 {
+  if $virtual == "virtualbox" and $::fqdn == '' {
+    $fqdn = "localhost"
+  }
   validate_bool($use_xdebug)
 
   validate_bool($use_hhvm)
@@ -56,9 +59,6 @@ class laravel (
   $nginx = "nginx-light"
   $base = [ $nginx, "php5-cli", "php5-mcrypt" ]
 
-  if $virtual == "virtualbox" and $fqdn == '' {
-    $fqdn = "localhost"
-  }
 
   include apt
 
