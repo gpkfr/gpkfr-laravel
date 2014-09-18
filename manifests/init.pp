@@ -100,6 +100,7 @@ class laravel (
       provider => shell,
       unless   => 'grep -Fxq "sendfile off" /etc/nginx/nginx.conf',
       notify   => Service['nginx'],
+      require  => Package[$nginx],
     }
   } else {
     service {"nginx":
