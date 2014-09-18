@@ -89,11 +89,24 @@ class laravel (
     require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec ['apt-update']],
   }
 
-  service {"nginx":
-    ensure  => running,
-    require => Package[$nginx],
+  if $virtual != "VMware" {
+    service {"nginx":
+      ensure  => running,
+      require => [Package[$nginx], Exec['disable_sendfile']],
+    }
+    exec { 'disable_sendfile':
+      command  => 'sed -i -e "s/\(sendfile\).*/\\1 off;/" /etc/nginx/nginx.conf',
+      path     => "/bin",
+      provider => shell,
+      unless   => 'grep -Fxq "sendfile off" /etc/nginx/nginx.conf',
+      notify   => Service['nginx'],
+    }
+  } else {
+    service {"nginx":
+      ensure  => running,
+      require => Package[$nginx],
+    }
   }
-
 
   # Install HHVM
   if $use_hhvm {
