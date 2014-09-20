@@ -218,6 +218,14 @@ class laravel (
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
       notify  => Service['php5-fpm'],
     }
+
+    file { "/home/vagrant/.my.cnf":
+      ensure => present,
+      mode => 644,
+      owner => 'vagrant',
+      group => 'vagrant',
+      content => template('laravel/mysql/my.cnf.erb'),
+    }
   } else {
     $pkgmysql = [ "php5-mysql", "mysql-common" ]
     package { $pkgmysql:
