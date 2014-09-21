@@ -59,6 +59,12 @@ class laravel (
   $nginx = "nginx-light"
   $base = [ $nginx, "php5-cli", "php5-mcrypt" ]
 
+  if $use_hhvm {
+    $phpserver = "hhvm"
+  } else {
+    $phpserver ="php5-fpm"
+  }
+  
 
   include apt
 
@@ -111,7 +117,6 @@ class laravel (
 
   # Install HHVM
   if $use_hhvm {
-    $phpserver = "hhvm"
 
     apt::source { 'hhvm':
       location    => 'http://dl.hhvm.com/debian',
@@ -158,7 +163,6 @@ class laravel (
   }
 
   if ! $use_hhvm {
-    $phpserver = "php5-fpm"
 
     include phpfpm
 
