@@ -29,11 +29,11 @@
 #
 # === Authors
 #
-# Author Name <author@domain.com>
+# Guillaume Pancak <gpkfr@imelbox.com>
 #
 # === Copyright
 #
-# Copyright 2014 Your name here, unless otherwise noted.
+# Copyright 2014 Guillaume Pancak, unless otherwise noted.
 #
 class laravel (
   $use_xdebug = false,
@@ -111,6 +111,8 @@ class laravel (
 
   # Install HHVM
   if $use_hhvm {
+    $phpserver = "hhvm"
+
     apt::source { 'hhvm':
       location    => 'http://dl.hhvm.com/debian',
       release     => 'wheezy',
@@ -125,12 +127,27 @@ class laravel (
       ensure  => latest,
       require => Apt::Source['hhvm']
     }
+    
+    package { 'libmemcachedutil2':
+      ensure  => latest,
+      before => Package['hhvm'],
+    }
 
     service { 'hhvm':
       ensure  => running,
       require => Package['hhvm'],
       notify  => Service['nginx'],
     }
+
+    exec { 'run_as_user_hhvm':
+        command  => 'sed -i -e "s/^[# ]*\(RUN_AS_USER=\"\).*\(\"\)/\\1vagrant\2/" /etc/default/hhvm && sed -i -e "s/^[# ]*\(RUN_AS_GROUP=\"\).*\(\"\)/\\1vagrant\2/" /etc/default/hhvm',
+        path     => "/bin",
+        provider => shell,
+        unless   => 'grep -Fxq "RUN_AS_USER=\"vagrant\"" /etc/default/hhvm',
+        notify   => Service['hhvm'],
+        require  => Package['hhvm'],
+    }
+
 
   } else {
 
@@ -141,6 +158,8 @@ class laravel (
   }
 
   if ! $use_hhvm {
+    $phpserver = "php5-fpm"
+
     include phpfpm
 
     phpfpm::pool { 'www':
@@ -193,10 +212,12 @@ class laravel (
       file    => '/etc/php5/mods-available/xdebug.ini',
       config  => $xdebug_config,
       require => Package[$xdebug],
+      notify  => Service[$phpserver],
     }
   } else {
     package { $xdebug:
       ensure => purged,
+      notify => Service[$phpserver],
     }
   }
 
@@ -204,7 +225,8 @@ class laravel (
   if ( $database_server == "mysql" ) {
     class { '::mysql::server':
       root_password    => 'root',
-      override_options => {'mysqld' => { 'max_connections' => '1024' }}
+      override_options => {'mysqld' => { 'max_connections' => '1024' }},
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
     }
 
     mysql_database { 'laravel':
@@ -216,7 +238,7 @@ class laravel (
     package { "php5-mysql":
       ensure  => latest,
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
-      notify  => Service['php5-fpm'],
+      notify  => Service[$phpserver],
     }
 
     file { "/home/vagrant/.my.cnf":
@@ -230,7 +252,7 @@ class laravel (
     $pkgmysql = [ "php5-mysql", "mysql-common" ]
     package { $pkgmysql:
      ensure => purged,
-     notify  => Service['php5-fpm'],
+     notify => Service[$phpserver],
     }
   }
 
@@ -253,13 +275,13 @@ class laravel (
     package { "php5-pgsql":
       ensure  => 'latest',
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
-      notify  => Service['php5-fpm'],
+      notify  => Service[$phpserver],
     }
   } else {
       $pkgpgsql = [ "php5-pgsql", "postgresql-client-common", "postgresql-common" ]
       package { $pkgpgsql:
         ensure => purged,
-        notify  => Service['php5-fpm'],
+        notify => Service[$phpserver],
       }
   }
 
@@ -268,12 +290,14 @@ class laravel (
     $pkgsqlite = [ "sqlite3", "php5-sqlite" ]
     package { $pkgsqlite:
       ensure  => 'latest',
-      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']]
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+      notify  => Service[$phpserver],
     }
   } else {
     $pkgsqlite = [ "sqlite3", "php5-sqlite" ]
     package { $pkgsqlite:
       ensure => 'purged',
+      notify => Service[$phpserver],
     }
   }
 
@@ -309,11 +333,13 @@ class laravel (
     #Redis-server install
     package { 'redis-server':
       ensure => latest,
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
     }
 
     package { 'php5-redis':
       ensure => latest,
-      notify => Service['php5-fpm'],
+      require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
+      notify => Service[$phpserver],
     }
 
     service { 'redis-server':
@@ -328,7 +354,7 @@ class laravel (
     }
     package { 'php5-redis':
       ensure => purged,
-      notify => Service['php5-fpm'],
+      notify => Service[$phpserver],
     }
   }
 
