@@ -212,7 +212,7 @@ class laravel (
 
 
     #Configure Xdebug
-    php::fpm::config { "Enable Xdebug":
+    php::config { "Enable Xdebug":
       file    => '/etc/php5/mods-available/xdebug.ini',
       config  => $xdebug_config,
       require => Package[$xdebug],
