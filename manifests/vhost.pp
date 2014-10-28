@@ -35,10 +35,12 @@ define laravel::vhost (
     notify  => Service["nginx"],
   }
 
-  file {"/etc/nginx/sites-enabled/default":
-    ensure  => absent,
-    require => Package[$nginx],
-    notify  => Service["nginx"],
-  }
 
+if ! defined(File["/etc/nginx/sites-enabled/default"]) {
+    file {"/etc/nginx/sites-enabled/default":
+      ensure  => absent,
+      require => Package[$nginx],
+      notify  => Service["nginx"],
+    }
+  }
 }

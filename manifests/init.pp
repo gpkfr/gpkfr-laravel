@@ -64,7 +64,7 @@ class laravel (
   } else {
     $phpserver ="php5-fpm"
   }
-  
+
 
   include apt
 
@@ -132,7 +132,7 @@ class laravel (
       ensure  => latest,
       require => Apt::Source['hhvm']
     }
-    
+
     package { 'libmemcachedutil2':
       ensure  => latest,
       before => Package['hhvm'],
@@ -175,6 +175,16 @@ class laravel (
       listen_owner => 'vagrant',
       listen_group => 'vagrant',
       listen_mode  => 0666,
+    }
+
+    file {"/etc/nginx/conf.d/upstream.conf":
+      ensure  => file,
+      mode    => 644,
+      owner   => 'root',
+      group   => 'root',
+      content => template('laravel/upstream.erb'),
+      require => Package[$nginx],
+      notify  => Service["nginx"],
     }
   }
 
