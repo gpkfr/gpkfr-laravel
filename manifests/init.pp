@@ -79,7 +79,7 @@ class laravel (
     location   => 'http://packages.dotdeb.org',
     release    => 'wheezy',
     repos      => 'all',
-    key        => '0x89DF5277',
+    key        => '6572BBEF1B5FF28B28B706837E3F070089DF5277',
     key_source => 'http://www.dotdeb.org/dotdeb.gpg',
   }
 
@@ -87,7 +87,7 @@ class laravel (
   location   => 'http://packages.dotdeb.org',
   release    => 'wheezy-php55',
   repos      => 'all',
-  key        => '0x89DF5277',
+  key        => '6572BBEF1B5FF28B28B706837E3F070089DF5277',
   key_source => 'http://www.dotdeb.org/dotdeb.gpg',
   }
 
@@ -123,7 +123,7 @@ class laravel (
       location    => 'http://dl.hhvm.com/debian',
       release     => 'wheezy',
       repos       => 'main',
-      key         => '0x1BE7A449',
+      key         => '36AEF64D0207E7EEE352D4875A16E7281BE7A449',
       key_source  => 'http://dl.hhvm.com/conf/hhvm.gpg.key',
       include_src => false,
       notify      => Exec['apt-update'],
