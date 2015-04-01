@@ -45,7 +45,8 @@ class laravel (
   $virtual = $::virtual,
   $remote_host_ip = undef,
   $database_server = "mysql",
-  $nodejs_version = $::nodejs_stable_version
+  $nodejs_version = $::nodejs_stable_version,
+  $compile_node = false
 )
 {
   if $virtual == "virtualbox" and $::fqdn == '' {
@@ -380,6 +381,7 @@ class laravel (
       notice ("Install NodeJS version : {$nodejs_version}. Please, be Patient")
       class { 'nodejs':
         version => $nodejs_version,
+        make_install => $compile_node,
       }->file { "/usr/local/bin/node":
         ensure  => link,
         target  => '/usr/local/node/node-default/bin/node',
@@ -388,7 +390,7 @@ class laravel (
         target  => '/usr/local/node/node-default/bin/npm',
       }
 
-
+    
       if $npm_pkg != undef {
         package { $npm_pkg:
           provider => npm,
