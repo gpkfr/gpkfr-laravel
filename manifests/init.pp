@@ -44,9 +44,10 @@ class laravel (
   $install_redis = false,
   $virtual = $::virtual,
   $remote_host_ip = undef,
-  $database_server = "mysql",
+  $database_server = "none",
   $nodejs_version = $::nodejs_stable_version,
-  $compile_node = false
+  $compile_node = false,
+  $php_release  =  'php55'
 )
 {
   if $virtual == "virtualbox" and $::fqdn == '' {
@@ -85,7 +86,7 @@ class laravel (
 
   apt::source { 'dotdeb':
   location   => 'http://packages.dotdeb.org',
-  release    => 'wheezy-php55',
+  release    => "wheezy-${php_release}",
   repos      => 'all',
   key        => '6572BBEF1B5FF28B28B706837E3F070089DF5277',
   key_source => 'http://www.dotdeb.org/dotdeb.gpg',
@@ -390,7 +391,7 @@ class laravel (
         target  => '/usr/local/node/node-default/bin/npm',
       }
 
-    
+
       if $npm_pkg != undef {
         package { $npm_pkg:
           provider => npm,
