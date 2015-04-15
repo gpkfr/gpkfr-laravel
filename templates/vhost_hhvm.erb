@@ -1,7 +1,7 @@
 server {
   server_name <%= @server_name %>;
 
-  listen 80;
+  listen <%= @nginx_port %>;
   root <%= @root_dir %>;
   index index.php;
 

@@ -1,11 +1,7 @@
-#upstream _fastcgi {
-#  server unix:/var/run/php5-fpm.sock;
-#}
-
 server {
   server_name <%= @server_name %>;
 
-  listen 80;
+  listen <%= @nginx_port %>;
   root <%= @root_dir %>;
   index index.php;
 

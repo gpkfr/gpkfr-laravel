@@ -2,7 +2,8 @@ define laravel::vhost (
   $server_name = $name,
   $root_dir = '/var/www',
   $nginx = $::laravel::nginx,
-  $use_hhvm = $::laravel::use_hhvm
+  $use_hhvm = $::laravel::use_hhvm,
+  $nginx_port = 80
 ){
   if ! defined(Class['laravel']) {
     fail('You must include the laravel base class before using any laravel defined resources')
