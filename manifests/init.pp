@@ -251,7 +251,7 @@ class laravel (
       collate => 'utf8_unicode_ci',
     }
 
-    package { "php5-mysql":
+    package { "php5-mysqlnd":
       ensure  => latest,
       require => [Apt::Source['dotdebbase'], Apt::Source ['dotdeb'], Exec [ 'apt-update']],
       notify  => Service[$phpserver],
@@ -265,7 +265,7 @@ class laravel (
       content => template('laravel/mysql/my.cnf.erb'),
     }
   } else {
-    $pkgmysql = [ "php5-mysql", "mysql-common" ]
+    $pkgmysql = [ "php5-mysqlnd", "mysql-common" ]
     package { $pkgmysql:
      ensure => purged,
      notify => Service[$phpserver],
